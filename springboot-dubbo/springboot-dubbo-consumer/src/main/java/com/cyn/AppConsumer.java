@@ -3,6 +3,7 @@ package com.cyn;
 import com.alibaba.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 
 /**
  * 文件描述
@@ -32,6 +33,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 3、使用注解API的方式
  *  将每一个组件手动加入spring容器中
  */
+@EnableHystrix
 @EnableDubbo
 @SpringBootApplication
 public class AppConsumer {

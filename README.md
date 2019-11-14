@@ -103,3 +103,58 @@
 * dubbo服务降级
 
   * 合理调整服务器资源，对一些服务和页面有策略的不处理或换种简单的方式处理，从而释放服务器资源以保证核心交易正常运作或高效运作
+  
+    ~~~java
+    可以通过服务降级功能临时屏蔽某个出错的非关键服务，并定义降级后的返回策略。
+    向注册中心写入动态配置覆盖规则：
+    RegistryFactory registryFactory = ExtensionLoader.getExtensionLoader(RegistryFactory.class).getAdaptiveExtension();
+    Registry registry = registryFactory.getRegistry(URL.valueOf("zookeeper://10.20.153.10:2181"));
+    registry.register(URL.valueOf("override://0.0.0.0/com.foo.BarService?category=configurators&dynamic=false&application=foo&mock=force:return+null"));
+    
+    其中：
+    	mock=force:return+null 表示消费方对该服务的方法调用都直接返回 null 值，不发起远程调用。用来屏蔽不重要服务不可用时对调用方的影响。
+    	还可以改为 mock=fail:return+null 表示消费方对该服务的方法调用在失败后，再返回 null 值，不抛异常。用来容忍不重要服务不稳定时对调用方的影响。
+    
+    ~~~
+
+* 集群容错
+
+  ~~~java
+  在集群调用失败时，Dubbo 提供了多种容错方案，缺省为 failover 重试。
+  集群容错模式
+  Failover Cluster
+  失败自动切换，当出现失败，重试其它服务器。通常用于读操作，但重试会带来更长延迟。可通过 retries="2" 来设置重试次数(不含第一次)。
+  
+  重试次数配置如下：
+  <dubbo:service retries="2" />
+  或
+  <dubbo:reference retries="2" />
+  或
+  <dubbo:reference>
+      <dubbo:method name="findFoo" retries="2" />
+  </dubbo:reference>
+  
+  Failfast Cluster
+  快速失败，只发起一次调用，失败立即报错。通常用于非幂等性的写操作，比如新增记录。
+  
+  Failsafe Cluster
+  失败安全，出现异常时，直接忽略。通常用于写入审计日志等操作。
+  
+  Failback Cluster
+  失败自动恢复，后台记录失败请求，定时重发。通常用于消息通知操作。
+  
+  Forking Cluster
+  并行调用多个服务器，只要一个成功即返回。通常用于实时性要求较高的读操作，但需要浪费更多服务资源。可通过 forks="2" 来设置最大并行数。
+  
+  Broadcast Cluster
+  广播调用所有提供者，逐个调用，任意一台报错则报错 [2]。通常用于通知所有提供者更新缓存或日志等本地资源信息。
+  
+  集群模式配置
+  按照以下示例在服务提供方和消费方配置集群模式
+  <dubbo:service cluster="failsafe" />
+  或
+  <dubbo:reference cluster="failsafe" />
+  
+  ~~~
+
+  

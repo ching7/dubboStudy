@@ -83,15 +83,19 @@
 
     ~~~properties
     @Reference(loadbalance = "") 负载均衡
+    
     Random LoadBalance
     随机，按权重设置随机概率。
     在一个截面上碰撞的概率高，但调用量越大分布越均匀，而且按概率使用权重后也比较均匀，有利于动态调整提供者权重。
+    
     RoundRobin LoadBalance
     轮循，按公约后的权重设置轮循比率。
     存在慢的提供者累积请求的问题，比如：第二台机器很慢，但没挂，当请求调到第二台时就卡在那，久而久之，所有请求都卡在调到第二台上。
+    
     LeastActive LoadBalance
     最少活跃调用数，相同活跃数的随机，活跃数指调用前后计数差。
     使慢的提供者收到更少请求，因为越慢的提供者的调用前后计数差会越大。
+    
     ConsistentHash LoadBalance
     一致性 Hash，相同参数的请求总是发到同一提供者。
     当某一台提供者挂时，原本发往该提供者的请求，基于虚拟节点，平摊到其它提供者，不会引起剧烈变动。算法参见：http://en.wikipedia.org/wiki/Consistent_hashing
@@ -104,16 +108,27 @@
 
   * 合理调整服务器资源，对一些服务和页面有策略的不处理或换种简单的方式处理，从而释放服务器资源以保证核心交易正常运作或高效运作
   
+  * dubbo 提供两种降级方式
+  
+    1、调用远程服务时，客户端强制返回为空
+  
+    直接在dubbo管理台，屏蔽服务（consumer客户端设置屏蔽）![服务屏蔽](dubbo.jpg)
+  
+    2、调用远程服务失败（超时，不可达等）时，客户端直接返回为空(consumer客户端设置容错）
+  
+    ![服务容错](dubbo2.jpg)
+  
+    
+  
     ~~~java
     可以通过服务降级功能临时屏蔽某个出错的非关键服务，并定义降级后的返回策略。
     向注册中心写入动态配置覆盖规则：
     RegistryFactory registryFactory = ExtensionLoader.getExtensionLoader(RegistryFactory.class).getAdaptiveExtension();
     Registry registry = registryFactory.getRegistry(URL.valueOf("zookeeper://10.20.153.10:2181"));
     registry.register(URL.valueOf("override://0.0.0.0/com.foo.BarService?category=configurators&dynamic=false&application=foo&mock=force:return+null"));
-    
     其中：
-    	mock=force:return+null 表示消费方对该服务的方法调用都直接返回 null 值，不发起远程调用。用来屏蔽不重要服务不可用时对调用方的影响。
-    	还可以改为 mock=fail:return+null 表示消费方对该服务的方法调用在失败后，再返回 null 值，不抛异常。用来容忍不重要服务不稳定时对调用方的影响。
+    - mock=force:return+null 表示消费方对该服务的方法调用都直接返回 null 值，不发起远程调用。用来屏蔽不重要服务不可用时对调用方的影响。
+    - 还可以改为 mock=fail:return+null 表示消费方对该服务的方法调用在失败后，再返回 null 值，不抛异常。用来容忍不重要服务不稳定时对调用方的影响。
     
     ~~~
 
@@ -157,4 +172,20 @@
   
   ~~~
 
-  
+* 整合Hystrix进行服务服务容错，熔断机制
+
+  * 导入依赖
+
+  ~~~xml
+  <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>
+                  spring-cloud-starter-netflix-hystrix
+        </artifactId>
+  </dependency>
+  ~~~
+
+  * 启用Hystrix
+    - provider,consumer 启动类添加注解@EnableHystrix
+    - 服务器接口实现方法上添加注解@HystrixCommand
+    - 调用者调用方法添加注解@HystrixCommand(fallbackMethod = "hello")、fallbackMethod为出错时调用的方法（熔断机制）

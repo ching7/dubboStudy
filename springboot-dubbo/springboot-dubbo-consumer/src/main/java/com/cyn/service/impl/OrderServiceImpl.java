@@ -25,7 +25,8 @@ public class OrderServiceImpl implements OrderService {
 	UserService userService;
 
 	/**
-	 * @HystrixCommand 出错时调用的方法
+	 * @HystrixCommand
+	 * fallbackMethod = "hello" ,调用微服务接口，出错时调用的方法
 	 * @param userId
 	 */
 	@HystrixCommand(fallbackMethod = "hello")

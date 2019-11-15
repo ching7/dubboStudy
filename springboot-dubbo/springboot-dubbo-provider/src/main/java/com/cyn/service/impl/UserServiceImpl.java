@@ -4,6 +4,7 @@ package com.cyn.service.impl;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.cyn.bean.UserAddress;
 import com.cyn.service.UserService;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -21,8 +22,11 @@ import java.util.List;
 @Component
 public class UserServiceImpl implements UserService {
 
+	@HystrixCommand
 	@Override
 	public List<UserAddress> getUserAddressList(String userId) {
+		//模拟接口出错
+		int err = 2/0;
 		System.out.println("UserServiceImpl.....old...");
 		// TODO Auto-generated method stub
 		UserAddress address1 = new UserAddress(1, "北京市昌平区宏福科技园综合楼3层", "1", "李老师", "010-56253825", "Y");

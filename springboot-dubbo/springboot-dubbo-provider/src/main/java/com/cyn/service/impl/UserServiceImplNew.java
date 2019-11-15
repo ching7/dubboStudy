@@ -35,6 +35,8 @@ public class UserServiceImplNew implements UserService {
 	@HystrixCommand
 	@Override
 	public List<UserAddress> getUserAddressList(String userId) {
+		//模拟接口出错
+		int err = 2/0;
 		System.out.println("UserServiceImpl.....new...");
 		// TODO Auto-generated method stub
 		UserAddress address1 = new UserAddress(1, "北京市昌平区宏福科技园综合楼3层", "1", "李老师", "010-56253825", "Y");
